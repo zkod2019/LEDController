@@ -27,6 +27,11 @@ def colorWipe(strip, color, wait_ms=50):
         strip.show()
         time.sleep(wait_ms / 1000.0)
 
+def solid(strip, color):
+    for i in range(strip.numPixels()):
+        strip.setPixelColor(i, color)
+    strip.show()
+
 
 strip = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL)
 strip.begin()
@@ -90,10 +95,18 @@ def home():
 def index_get(path):
     return send_from_directory('static', path)
 
-@app.route('/solid', methods=['GET'])
-def solid_color():
+@app.route('/wipe', methods=['GET'])
+def wipe_color():
     rgb = [int(color) for color in request.args.get("rgb").split(":")]
     colorWipe(strip, Color(rgb[0], rgb[1], rgb[2]))
     return Response(json.dumps({"code": 200}), mimetype='application/json')
 
+
+@app.route('/solid', methods=['GET'])
+def solid_color():
+    rgb = [int(color) for color in request.args.get("rgb").split(":")]
+    solid(strip, Color(rgb[0], rgb[1], rgb[2]))
+    return Response(json.dumps({"code": 200}), mimetype='application/json')
+
+colorWipe(strip, Color(255, 255, 255))
 app.run(host='0.0.0.0', ssl_context='adhoc', port=5000)

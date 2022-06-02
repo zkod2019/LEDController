@@ -6,27 +6,24 @@ const signInBtn = document.querySelector("#sign-in");
 const accessToken = sessionStorage.getItem("accessToken");
 
 function colorStringToRGB(colorString) {
-  switch (colorString) {
-    case "red":
-      return [255, 0, 0];
-    case "orange":
-      return [244, 88, 0];
-    case "yellow":
-      return [255, 159, 0];
-    case "green":
-      return [0, 255, 0];
-    case "turquoise":
-      return [0, 255, 255];
-    case "blue":
-      return [0, 0, 255];
-    case "purple":
-      return [101, 3, 154];
-    case "black":
-      return [0, 0, 0];
-    case "pink":
-      return [248, 24, 148];
-    default:
-      return null;
+  if (colorString.includes("red")){
+    return [255, 0, 0];
+  } else if (colorString.includes("orange")){
+    return [160, 19, 3];
+  }else if (colorString.includes("yellow")){
+    return [199, 192, 0];
+  }else if (colorString.includes("green")){
+    return [0, 255, 0];
+  }else if (colorString.includes("turquoise")){
+    return [0, 255, 255];
+  }else if (colorString.includes("blue")){
+    return [0, 0, 255];
+  }else if (colorString.includes("purple")){
+    return [38, 0, 56];
+  }else if (colorString.includes("pink")){
+    return [158, 0, 124];
+  }else{
+    return null;
   }
 }
 
@@ -60,7 +57,7 @@ if (accessToken) {
     if (
       parsed.tags &&
       parsed.tags["custom-reward-id"] &&
-      parsed.tags["custom-reward-id"] === "9f524bb9-a5ea-42c2-9c0d-bb7ea260b6a4"
+      parsed.tags["custom-reward-id"] === "858972d4-9bc7-484e-b2ad-2d3f2e92c683"
     ) {
       color = parsed.parameters.trim().toLowerCase();
     } else if (
@@ -79,7 +76,7 @@ if (accessToken) {
         }, 1000);
       } else {
         console.log("flash: ", color);
-        fetch(`https://192.168.0.193:5000/solid?rgb=${rgb.join(":")}`);
+        fetch(`https://192.168.0.193:5000/wipe?rgb=${rgb.join(":")}`);
       }
     }
   });
@@ -108,3 +105,35 @@ if (accessToken) {
     window.location = "/";
   }
 }
+
+function hexToRgb(hex) {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? [
+    parseInt(result[1], 16),
+    parseInt(result[2], 16),
+    parseInt(result[3], 16)
+  ] : null;
+}
+
+
+function debounce(func, wait, immediate) {
+  var timeout;
+  return function() {
+      var context = this, args = arguments;
+      var later = function() {
+          timeout = null;
+          if (!immediate) func.apply(context, args);
+      };
+      var callNow = immediate && !timeout;
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+      if (callNow) func.apply(context, args);
+  };
+};
+
+const colorInput = document.getElementById("color-input");
+const debouncedInputHandler = debounce((e) => {
+  const rgbArr = hexToRgb(e.target.value)
+  fetch(`https://192.168.0.193:5000/solid?rgb=${rgbArr.join(":")}`);
+}, 200);
+colorInput.addEventListener("input", debouncedInputHandler)
