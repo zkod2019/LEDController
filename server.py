@@ -48,25 +48,28 @@ def wheel(pos):
         pos -= 170
         return Color(0, pos * 3, 255 - pos * 3)
 
-# creates rainbow animation that distributes itself across all pixels
-def rainbowCycle(strip, wait_ms=20, iterations=1):
-    for j in range(256 * iterations):
-        for i in range(strip.numPixels()):
-            strip.setPixelColor(i, wheel(
-                (int(i * 256 / strip.numPixels()) + j) & 255))
-        strip.show()
-        time.sleep(wait_ms / 1000.0)
+stopEverything = False
+def rainbowCycle(strip, wait_ms=20):
+    global stopEverything
+    while not stopEverything:
+        for j in range(256):
+            if stopEverything:
+                break
+            for i in range(strip.numPixels()):
+                if stopEverything:
+                    break
+                strip.setPixelColor(i, wheel(
+                    (int(i * 256 / strip.numPixels()) + j) & 255))
+            strip.show()
+            time.sleep(wait_ms / 1000.0)
+
+    stopEverything = False
+
 
 # based on the color passed, random LED lights turn on and off to create matrix/rain effect
 def togglePixelRandomly(strip, i, color):
     time.sleep(random.uniform(0, 2))
-    if color == 'green':
-        strip.setPixelColor(i, Color(0, random.randrange(60, 255), 0))
-    elif color == 'red':
-        strip.setPixelColor(i, Color(random.randrange(60, 255), 0, 0))
-    elif color == 'blue':
-        strip.setPixelColor(i, Color(0, 0, random.randrange(60, 255)))
-
+    strip.setPixelColor(i, color)
     strip.show()
 
     time.sleep(random.uniform(0, 2))
@@ -75,6 +78,7 @@ def togglePixelRandomly(strip, i, color):
 
 # flickers LED lights at random positions
 def randomPosition(strip, color):
+    solid(strip, color)
     indices = list(range(strip.numPixels()))
     random.shuffle(indices)
     for i in indices:
@@ -97,16 +101,34 @@ def index_get(path):
 
 @app.route('/wipe', methods=['GET'])
 def wipe_color():
+    global stopEverything
+    stopEverything = True
     rgb = [int(color) for color in request.args.get("rgb").split(":")]
     colorWipe(strip, Color(rgb[0], rgb[1], rgb[2]))
+    return Response(json.dumps({"code": 200}), mimetype='application/json')
+
+@app.route('/matrix', methods=['GET'])
+def matrix():
+    global stopEverything
+    stopEverything = True
+    rgb = [int(color) for color in request.args.get("rgb").split(":")]
+    randomPosition(strip, Color(rgb[0], rgb[1], rgb[2]))
+    return Response(json.dumps({"code": 200}), mimetype='application/json')
+
+@app.route('/rainbow', methods=['GET'])
+def rainbow():
+    rainbowThread = threading.Thread(target=rainbowCycle, args=(strip,))
+    rainbowThread.start()
     return Response(json.dumps({"code": 200}), mimetype='application/json')
 
 
 @app.route('/solid', methods=['GET'])
 def solid_color():
+    global stopEverything
+    stopEverything = True
     rgb = [int(color) for color in request.args.get("rgb").split(":")]
     solid(strip, Color(rgb[0], rgb[1], rgb[2]))
     return Response(json.dumps({"code": 200}), mimetype='application/json')
 
 colorWipe(strip, Color(255, 255, 255))
-app.run(host='0.0.0.0', ssl_context='adhoc', port=5000)
+app.run(host='0.0.0.0', ssl_context='adhoc', port=5001)

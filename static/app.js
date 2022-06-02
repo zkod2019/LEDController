@@ -76,7 +76,7 @@ if (accessToken) {
         }, 1000);
       } else {
         console.log("flash: ", color);
-        fetch(`https://192.168.0.193:5000/wipe?rgb=${rgb.join(":")}`);
+        fetch(`https://192.168.0.193:5001/wipe?rgb=${rgb.join(":")}`);
       }
     }
   });
@@ -88,7 +88,7 @@ if (accessToken) {
       "https://id.twitch.tv/oauth2/authorize",
       `?response_type=token`,
       `&client_id=t9engz4h3xp5mzviv6vyrr90jw19rm`,
-      `&redirect_uri=https://192.168.0.193:5000`,
+      `&redirect_uri=https://192.168.0.193:5001`,
       `&scope=chat%3Aread+chat%3Aedit`,
       `&state=c3ab8aa609ea11e793ae92361f002671`,
     ].join("");
@@ -115,25 +115,49 @@ function hexToRgb(hex) {
   ] : null;
 }
 
-
-function debounce(func, wait, immediate) {
-  var timeout;
-  return function() {
-      var context = this, args = arguments;
-      var later = function() {
-          timeout = null;
-          if (!immediate) func.apply(context, args);
-      };
-      var callNow = immediate && !timeout;
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-      if (callNow) func.apply(context, args);
-  };
-};
-
+const animeationSelect = document.getElementById("animation-type");
 const colorInput = document.getElementById("color-input");
-const debouncedInputHandler = debounce((e) => {
-  const rgbArr = hexToRgb(e.target.value)
-  fetch(`https://192.168.0.193:5000/solid?rgb=${rgbArr.join(":")}`);
-}, 200);
-colorInput.addEventListener("input", debouncedInputHandler)
+
+animeationSelect.addEventListener("change", (e) => {
+  switch (animeationSelect.value) {
+    case "solid": {
+      const rgbArr = hexToRgb(colorInput.value);
+      fetch(`https://192.168.0.193:5001/solid?rgb=${rgbArr.join(":")}`);
+      break;
+    }
+    case "rainbow":
+      fetch(`https://192.168.0.193:5001/rainbow`);
+      break;
+    case "matrix": {
+      const rgbArr = hexToRgb(colorInput.value);
+      fetch(`https://192.168.0.193:5001/matrix?rgb=${rgbArr.join(":")}`);
+      break;
+    }
+    case "love":
+      fetch(`https://192.168.0.193:5001/matrix?rgb=255:0:0`);
+      break;
+    case "rain":
+      fetch(`https://192.168.0.193:5001/matrix?rgb=0:0:255`);
+      break;
+  }
+
+});
+
+colorInput.addEventListener("input", (e) => {
+  const rgbArr = hexToRgb(e.target.value);
+  switch (animeationSelect.value) {
+    case "solid": {
+      fetch(`https://192.168.0.193:5001/solid?rgb=${rgbArr.join(":")}`);
+      break;
+    }
+    case "matrix": {
+      fetch(`https://192.168.0.193:5001/matrix?rgb=${rgbArr.join(":")}`);
+      break;
+    }
+    case "rainbow":
+    case "love":
+    case "rain":
+      break;
+  }
+});
+
